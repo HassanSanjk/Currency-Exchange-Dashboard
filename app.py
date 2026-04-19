@@ -1,6 +1,6 @@
 import requests
 from flask import Flask, render_template, request
-from datetime import timedelta
+from datetime import datetime, timedelta
 from config import Config
 from services.official_rates import get_official_rate
 from services.market_rates import get_usd_sdg_rate
@@ -68,6 +68,7 @@ def convert():
         result = amount * rate
         official_status = official["status"]
         utc_time = official["updated_at"]
+        utc_time = datetime.strptime(utc_time, "%Y-%m-%d %H:%M:%S")
         myt_time = utc_time + timedelta(hours=8)
         official_updated = {"utc": utc_time.strftime("%H:%M"),
                             "myt": myt_time.strftime("%H:%M"),}
@@ -80,6 +81,7 @@ def convert():
             market_ref = usd_sdg
             market_status = market["status"]
             utc_time_m = market["updated_at"]
+            utc_time_m = datetime.strptime(utc_time_m, "%Y-%m-%d %H:%M:%S")
             myt_time_m = utc_time_m + timedelta(hours=8)
 
             market_updated = {"utc": utc_time_m.strftime("%H:%M"),

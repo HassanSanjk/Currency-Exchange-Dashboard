@@ -35,7 +35,7 @@
     {% endif %}
 
     {% if official_updated %}
-    <p><strong>Last updated at:</strong> {{ official_updated.myt }} MYT / {{ official_updated.utc }} UTC</p>
+    <p><strong>Last updated:</strong> {{ official_updated.utc }} UTC ({{ official_updated.myt }} Malaysia Time)</p>
     {% endif %}
 </div>
 {% endif %}
@@ -56,7 +56,7 @@
     {% endif %}
 
     {% if market_updated %}
-    <p><strong>Last updated at:</strong> {{ market_updated.myt }} MYT / {{ market_updated.utc }} UTC</p>
+    <p><strong>Last updated at:</strong> {{ market_updated.utc }} UTC ({{ market_updated.myt }} Malaysia Time)</p>
     {% endif %}
 
     {% if show_market_note %}
