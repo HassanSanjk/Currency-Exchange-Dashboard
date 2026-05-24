@@ -15,7 +15,7 @@ def _updated_key(base, target, source):
     return f"rate:{base}:{target}:{source}:updated"
 
 
-def get_cached_rate(base, target, source, max_age_hours=24):
+def get_cached_rate(base, target, source):
     client = get_redis_client()
     key = _rate_key(base, target, source)
     value = client.get(key)
@@ -24,13 +24,14 @@ def get_cached_rate(base, target, source, max_age_hours=24):
     return None
 
 
-def save_rate(base, target, source, rate):
+def save_rate(base, target, source, rate, max_age_hours=24):
     client = get_redis_client()
     key = _rate_key(base, target, source)
     updated_key = _updated_key(base, target, source)
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    client.set(key, rate)
-    client.set(updated_key, now)
+    ttl = max_age_hours * 3600
+    client.setex(key, ttl, rate)
+    client.setex(updated_key, ttl, now)
 
 
 def get_last_updated(base, target, source):

@@ -11,7 +11,7 @@ app.config.from_object(Config)
 
 @app.route("/")
 def index():
-    return send_from_directory("../static/react", "index.html")
+    return send_from_directory("static/react", "index.html")
 
 
 @app.route("/convert", methods=["POST"])

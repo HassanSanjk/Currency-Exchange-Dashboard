@@ -4,6 +4,14 @@ import OfficialResult from './OfficialResult'
 import MarketResult from './MarketResult'
 import ErrorBanner from './ErrorBanner'
 
+function formatNumber(value) {
+  if (value == null) return null
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  }).format(value)
+}
+
 function App() {
   const [error, setError] = useState(null)
   const [official, setOfficial] = useState(null)
@@ -28,8 +36,21 @@ function App() {
       if (data.error) {
         setError(data.error)
       } else {
-        if (data.official) setOfficial(data.official)
-        if (data.market) setMarket(data.market)
+        if (data.official) {
+          setOfficial({
+            ...data.official,
+            converted: formatNumber(data.official.converted),
+            rate: formatNumber(data.official.rate),
+          })
+        }
+        if (data.market) {
+          setMarket({
+            ...data.market,
+            converted: formatNumber(data.market.converted),
+            rate: formatNumber(data.market.rate),
+            ref: formatNumber(data.market.ref),
+          })
+        }
       }
     } catch (err) {
       setError('Failed to connect to server.')
@@ -39,12 +60,15 @@ function App() {
   }
 
   return (
-    <div>
-      <h1>Currency Converter</h1>
-      <CurrencyForm onConvert={handleConvert} loading={loading} />
-      <ErrorBanner message={error} />
-      <OfficialResult result={official} />
-      <MarketResult result={market} />
+    <div className="app-container">
+      <div className="app-inner">
+        <CurrencyForm onConvert={handleConvert} loading={loading} />
+        <ErrorBanner message={error} />
+        <div className="results-grid">
+          <OfficialResult result={official} />
+          <MarketResult result={market} />
+        </div>
+      </div>
     </div>
   )
 }

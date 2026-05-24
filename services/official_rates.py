@@ -10,7 +10,7 @@ def get_official_rate(base, target):
     base = base.upper().strip()
     target = target.upper().strip()
 
-    cached = get_cached_rate(base, target, "official", max_age_hours=24)
+    cached = get_cached_rate(base, target, "official")
     if cached is not None:
         return {
             "rate": cached,
@@ -40,7 +40,7 @@ def get_official_rate(base, target):
         raise ValueError("Invalid currency code or API response.")
 
     rate = float(data["data"][target]["value"])
-    save_rate(base, target, "official", rate)
+    save_rate(base, target, "official", rate, max_age_hours=24)
 
     return {
         "rate": rate,

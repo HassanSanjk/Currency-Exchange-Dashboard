@@ -7,7 +7,7 @@ from services.official_rates import get_official_rate
 
 
 def get_usd_sdg_rate():
-    cached = get_cached_rate("USD", "SDG", "market", max_age_hours=6)
+    cached = get_cached_rate("USD", "SDG", "market")
     if cached is not None:
         return {
             "rate": cached,
@@ -16,7 +16,7 @@ def get_usd_sdg_rate():
         }
 
     rate = scrape_alsoug_usd_sdg_rate()
-    save_rate("USD", "SDG", "market", rate)
+    save_rate("USD", "SDG", "market", rate, max_age_hours=6)
 
     return {
         "rate": rate,
