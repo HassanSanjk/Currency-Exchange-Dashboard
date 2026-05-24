@@ -8,7 +8,7 @@ Built as a learning project — React frontend, Flask API, Redis caching, all wr
 
 ## Live Demo
 
-http://52.74.74.184
+https://currency-app.duckdns.org
 
 ---
 
@@ -131,9 +131,6 @@ This starts both the Flask app and Redis. Visit **http://localhost:5000**.
 
 - Historical rate chart
 - Dark mode
-- Custom domain with HTTPS
 - A proper CI/CD pipeline
 
----
 
-*Built by following a 5-day plan — switching from MySQL to Redis, adding a React frontend, Dockerizing everything, and deploying on AWS EC2. Learned a ton along the way.*
