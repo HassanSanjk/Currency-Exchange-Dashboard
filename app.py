@@ -1,5 +1,5 @@
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime, timedelta
 from config import Config
 from services.official_rates import get_official_rate
@@ -9,31 +9,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 
-def format_number(value):
-    if value is None:
-        return None
-    return f"{value:,.3f}"
-
-
 @app.route("/")
 def index():
-    return render_template(
-        "currency.html",
-        base="",
-        target="",
-        amount="",
-        error=None,
-        result=None,
-        rate=None,
-        official_status=None,
-        official_updated=None,
-        market_result=None,
-        market_rate=None,
-        market_ref=None,
-        market_status=None,
-        market_updated=None,
-        show_market_note=False,
-    )
+    return send_from_directory("../static/react", "index.html")
 
 
 @app.route("/convert", methods=["POST"])
@@ -43,18 +21,8 @@ def convert():
     amount_text = request.form["amount"].strip()
 
     error = None
-
-    result = None
-    rate = None
-    official_status = None
-    official_updated = None
-
-    market_result = None
-    market_rate = None
-    market_ref = None
-    market_status = None
-    market_updated = None
-    show_market_note = False
+    official_data = None
+    market_data = None
 
     try:
         amount = float(amount_text)
@@ -63,48 +31,57 @@ def convert():
             raise ValueError("Amount must be greater than 0.")
 
         # Official / API conversion
-        official = get_official_rate(base, target)
-        rate = official["rate"]
-        result = amount * rate
-        official_status = official["status"]
-        utc_time = official["updated_at"]
-        utc_time = datetime.strptime(utc_time, "%Y-%m-%d %H:%M:%S")
+        off = get_official_rate(base, target)
+        rate = off["rate"]
+        converted = amount * rate
+        utc_time = datetime.strptime(off["updated_at"], "%Y-%m-%d %H:%M:%S")
         myt_time = utc_time + timedelta(hours=8)
-        official_updated = {"utc": utc_time.strftime("%H:%M"),
-                            "myt": myt_time.strftime("%H:%M"),}
+
+        official_data = {
+            "base": base,
+            "target": target,
+            "amount": amount,
+            "converted": converted,
+            "rate": rate,
+            "status": off["status"],
+            "updated": utc_time.strftime("%H:%M"),
+            "updatedMyt": myt_time.strftime("%H:%M"),
+        }
 
         # SDG market conversion
         if base == "SDG" or target == "SDG":
-            market = get_usd_sdg_rate()
-            usd_sdg = market["rate"]
-
-            market_ref = usd_sdg
-            market_status = market["status"]
-            utc_time_m = market["updated_at"]
-            utc_time_m = datetime.strptime(utc_time_m, "%Y-%m-%d %H:%M:%S")
+            mkt = get_usd_sdg_rate()
+            usd_sdg = mkt["rate"]
+            utc_time_m = datetime.strptime(mkt["updated_at"], "%Y-%m-%d %H:%M:%S")
             myt_time_m = utc_time_m + timedelta(hours=8)
 
-            market_updated = {"utc": utc_time_m.strftime("%H:%M"),
-                            "myt": myt_time_m.strftime("%H:%M"),}
-            show_market_note = True
+            market_data = {
+                "base": base,
+                "target": target,
+                "amount": amount,
+                "ref": usd_sdg,
+                "status": mkt["status"],
+                "updated": utc_time_m.strftime("%H:%M"),
+                "updatedMyt": myt_time_m.strftime("%H:%M"),
+            }
 
             if base == "USD" and target == "SDG":
-                market_rate = usd_sdg
-                market_result = amount * market_rate
+                market_data["rate"] = usd_sdg
+                market_data["converted"] = amount * usd_sdg
 
             elif base == "SDG" and target == "USD":
-                market_rate = 1 / usd_sdg
-                market_result = amount * market_rate
+                market_data["rate"] = 1 / usd_sdg
+                market_data["converted"] = amount * market_data["rate"]
 
             elif base == "SDG":
                 usd_to_target = get_official_rate("USD", target)["rate"]
-                market_rate = (1 / usd_sdg) * usd_to_target
-                market_result = amount * market_rate
+                market_data["rate"] = (1 / usd_sdg) * usd_to_target
+                market_data["converted"] = amount * market_data["rate"]
 
             elif target == "SDG":
                 base_to_usd = get_official_rate(base, "USD")["rate"]
-                market_rate = base_to_usd * usd_sdg
-                market_result = amount * market_rate
+                market_data["rate"] = base_to_usd * usd_sdg
+                market_data["converted"] = amount * market_data["rate"]
 
     except ValueError as e:
         error = str(e)
@@ -113,23 +90,7 @@ def convert():
     except Exception as e:
         error = f"Something went wrong: {e}"
 
-    return render_template(
-        "currency.html",
-        base=base,
-        target=target,
-        amount=amount_text,
-        error=error,
-        result=format_number(result),
-        rate=format_number(rate),
-        official_status=official_status,
-        official_updated=official_updated,
-        market_result=format_number(market_result),
-        market_rate=format_number(market_rate),
-        market_ref=format_number(market_ref),
-        market_status=market_status,
-        market_updated=market_updated,
-        show_market_note=show_market_note,
-    )
+    return jsonify({"error": error, "official": official_data, "market": market_data})
 
 
 if __name__ == "__main__":
