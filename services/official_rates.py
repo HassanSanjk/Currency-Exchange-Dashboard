@@ -1,7 +1,7 @@
 from flask import current_app
 import requests
 
-from db import get_cached_rate, get_last_updated, save_rate
+from redis_client import get_cached_rate, get_last_updated, save_rate
 
 URL = "https://api.currencyapi.com/v3/latest"
 

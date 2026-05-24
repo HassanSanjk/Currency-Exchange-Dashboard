@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from flask import current_app
 
-from db import get_cached_rate, get_last_updated, save_rate
+from redis_client import get_cached_rate, get_last_updated, save_rate
 from services.official_rates import get_official_rate
 
 
