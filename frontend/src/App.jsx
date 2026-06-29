@@ -3,6 +3,7 @@ import CurrencyForm from './CurrencyForm'
 import OfficialResult from './OfficialResult'
 import MarketResult from './MarketResult'
 import ErrorBanner from './ErrorBanner'
+import HistoryChart from './HistoryChart'
 
 function formatNumber(value) {
   if (value == null) return null
@@ -17,12 +18,16 @@ function App() {
   const [official, setOfficial] = useState(null)
   const [market, setMarket] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [history, setHistory] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
 
   async function handleConvert(base, target, amount) {
     setLoading(true)
     setError(null)
     setOfficial(null)
     setMarket(null)
+    setHistory(null)
+    setShowHistory(false)
 
     try {
       const response = await fetch('/convert', {
@@ -51,6 +56,13 @@ function App() {
             ref: formatNumber(data.market.ref),
           })
         }
+
+        if (base === 'SDG' || target === 'SDG') {
+          const histRes = await fetch(`/api/history?base=${base}&target=${target}`)
+          const histData = await histRes.json()
+          setHistory(histData)
+          setShowHistory(true)
+        }
       }
     } catch (err) {
       setError('Failed to connect to server.')
@@ -68,6 +80,9 @@ function App() {
           <OfficialResult result={official} />
           <MarketResult result={market} />
         </div>
+        {showHistory && history && (
+          <HistoryChart official={history.official} market={history.market} />
+        )}
       </div>
     </div>
   )
