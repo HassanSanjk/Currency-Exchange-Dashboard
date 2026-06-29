@@ -1,6 +1,7 @@
+import json
 import time
 import requests
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, current_app, request, jsonify, send_from_directory
 from datetime import datetime, timedelta
 from config import Config
 from redis_client import get_redis_client
@@ -105,6 +106,36 @@ def api_history():
     official = get_history(base, target, "official")
     market = get_history(base, target, "market") if "SDG" in (base, target) else []
     return jsonify({"official": official, "market": market})
+
+
+CURRENCIES_API_URL = "https://api.currencyapi.com/v3/currencies"
+
+
+@app.route("/api/currencies", methods=["GET"])
+def api_currencies():
+    client = get_redis_client()
+    cached = client.get("currencies")
+    if cached:
+        return jsonify({"currencies": json.loads(cached.decode("utf-8"))})
+
+    api_key = current_app.config["CURRENCYAPI_KEY"]
+    if not api_key:
+        return jsonify({"error": "Missing CURRENCYAPI_KEY"}), 500
+
+    headers = {"apikey": api_key}
+    response = requests.get(CURRENCIES_API_URL, headers=headers, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+
+    currencies = [
+        {"code": c["code"], "name": c["name"], "symbol": c.get("symbol", "")}
+        for c in data.get("data", {}).values()
+    ]
+    currencies.sort(key=lambda x: x["code"])
+
+    client.setex("currencies", 86400, json.dumps(currencies))
+
+    return jsonify({"currencies": currencies})
 
 
 @app.route("/health", methods=["GET"])
