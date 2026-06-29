@@ -1,8 +1,10 @@
+import time
 import requests
 from bs4 import BeautifulSoup
 from flask import current_app
 
 from redis_client import get_cached_rate, get_last_updated, save_rate
+from services.history import save_snapshot as history_snapshot
 from services.official_rates import get_official_rate
 
 
@@ -15,8 +17,12 @@ def get_usd_sdg_rate():
             "updated_at": get_last_updated("USD", "SDG", "market"),
         }
 
+    start = time.perf_counter()
     rate = scrape_alsoug_usd_sdg_rate()
+    elapsed = time.perf_counter() - start
+    print(f"[TIMING] Alsoug live scrape took {elapsed:.4f}s")
     save_rate("USD", "SDG", "market", rate, max_age_hours=6)
+    history_snapshot("USD", "SDG", "market", rate)
 
     return {
         "rate": rate,
