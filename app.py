@@ -1,9 +1,14 @@
+import time
 import requests
 from flask import Flask, request, jsonify, send_from_directory
 from datetime import datetime, timedelta
 from config import Config
+from redis_client import get_redis_client
 from services.official_rates import get_official_rate
 from services.market_rates import get_usd_sdg_rate
+from services.history import get_history
+
+START_TIME = time.time()
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -91,6 +96,38 @@ def convert():
         error = f"Something went wrong: {e}"
 
     return jsonify({"error": error, "official": official_data, "market": market_data})
+
+
+@app.route("/api/history", methods=["GET"])
+def api_history():
+    base = request.args.get("base", "USD").upper().strip()
+    target = request.args.get("target", "SDG").upper().strip()
+    official = get_history(base, target, "official")
+    market = get_history(base, target, "market") if "SDG" in (base, target) else []
+    return jsonify({"official": official, "market": market})
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    redis_ok = False
+    last_fetch = {"currencyapi": None, "alsoug": None}
+    try:
+        client = get_redis_client()
+        redis_ok = client.ping()
+        caf = client.get("rate:USD:SDG:official:updated")
+        alf = client.get("rate:USD:SDG:market:updated")
+        if caf:
+            last_fetch["currencyapi"] = caf.decode("utf-8")
+        if alf:
+            last_fetch["alsoug"] = alf.decode("utf-8")
+    except Exception:
+        redis_ok = False
+    return jsonify({
+        "status": "ok" if redis_ok else "degraded",
+        "redis": redis_ok,
+        "uptime_seconds": int(time.time() - START_TIME),
+        "last_fetch": last_fetch,
+    })
 
 
 if __name__ == "__main__":
