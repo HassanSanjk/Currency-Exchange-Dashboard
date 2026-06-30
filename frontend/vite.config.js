@@ -8,4 +8,7 @@ export default defineConfig({
   build: {
     outDir: '../static/react',
   },
+  server: {
+    proxy: { '/static': 'http://localhost:5000' },
+  },
 })

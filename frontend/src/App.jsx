@@ -72,6 +72,8 @@ function App() {
   }
 
   return (
+    <>
+    <div className="bg-map" />
     <div className="app-container">
       <div className="app-inner">
         <CurrencyForm onConvert={handleConvert} loading={loading} />
@@ -85,6 +87,7 @@ function App() {
         )}
       </div>
     </div>
+    </>
   )
 }
 
