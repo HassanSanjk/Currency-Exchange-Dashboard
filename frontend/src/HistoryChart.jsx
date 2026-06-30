@@ -35,23 +35,13 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 function HistoryChart({ official = [], market = [] }) {
-  const mergedData = useMemo(() => {
-    const map = {}
-    official.forEach(p => {
-      if (!map[p.timestamp]) map[p.timestamp] = { timestamp: p.timestamp }
-      map[p.timestamp].official = p.rate
-    })
-    market.forEach(p => {
-      if (!map[p.timestamp]) map[p.timestamp] = { timestamp: p.timestamp }
-      map[p.timestamp].market = p.rate
-    })
-    return Object.values(map).sort((a, b) => a.timestamp - b.timestamp)
-  }, [official, market])
+  const data = useMemo(() => {
+    return market
+      .map(p => ({ timestamp: p.timestamp, rate: p.rate }))
+      .sort((a, b) => a.timestamp - b.timestamp)
+  }, [market])
 
-  const hasOfficial = official.length > 0
-  const hasMarket = market.length > 0
-
-  if (!hasOfficial && !hasMarket) {
+  if (!data.length) {
     return (
       <div className="chart-container">
         <div style={{ textAlign: 'center', color: '#666', padding: '130px 0', fontSize: 14 }}>
@@ -64,7 +54,7 @@ function HistoryChart({ official = [], market = [] }) {
   return (
     <div className="chart-container">
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={mergedData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+        <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
           <XAxis
             dataKey="timestamp"
@@ -80,30 +70,15 @@ function HistoryChart({ official = [], market = [] }) {
             width={50}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: 13, paddingTop: 8 }}
-            iconType="line"
+          <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} iconType="line" />
+          <Line
+            dataKey="rate"
+            stroke="#f97316"
+            strokeWidth={2}
+            dot={false}
+            name="Market Rate"
+            connectNulls={false}
           />
-          {hasOfficial && (
-            <Line
-              dataKey="official"
-              stroke="#22c55e"
-              strokeWidth={2}
-              dot={false}
-              name="Official"
-              connectNulls={false}
-            />
-          )}
-          {hasMarket && (
-            <Line
-              dataKey="market"
-              stroke="#f97316"
-              strokeWidth={2}
-              dot={false}
-              name="Market"
-              connectNulls={false}
-            />
-          )}
         </LineChart>
       </ResponsiveContainer>
     </div>
