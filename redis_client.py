@@ -1,4 +1,5 @@
 import redis
+import time
 from flask import current_app
 from datetime import datetime
 
@@ -16,15 +17,19 @@ def _updated_key(base, target, source):
 
 
 def get_cached_rate(base, target, source):
+    start = time.perf_counter()
     client = get_redis_client()
     key = _rate_key(base, target, source)
     value = client.get(key)
+    elapsed = time.perf_counter() - start
+    print(f"[TIMING] Redis get_cached_rate({base}, {target}, {source}) took {elapsed:.6f}s")
     if value is not None:
         return float(value)
     return None
 
 
 def save_rate(base, target, source, rate, max_age_hours=24):
+    start = time.perf_counter()
     client = get_redis_client()
     key = _rate_key(base, target, source)
     updated_key = _updated_key(base, target, source)
@@ -32,12 +37,17 @@ def save_rate(base, target, source, rate, max_age_hours=24):
     ttl = max_age_hours * 3600
     client.setex(key, ttl, rate)
     client.setex(updated_key, ttl, now)
+    elapsed = time.perf_counter() - start
+    print(f"[TIMING] Redis save_rate({base}, {target}, {source}) took {elapsed:.6f}s")
 
 
 def get_last_updated(base, target, source):
+    start = time.perf_counter()
     client = get_redis_client()
     key = _updated_key(base, target, source)
     value = client.get(key)
+    elapsed = time.perf_counter() - start
+    print(f"[TIMING] Redis get_last_updated({base}, {target}, {source}) took {elapsed:.6f}s")
     if value is not None:
         return value.decode("utf-8")
     return None
