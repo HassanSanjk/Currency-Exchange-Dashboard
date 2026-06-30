@@ -5,7 +5,9 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #f5f5f5;
+  background-color: #f5f5f5;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: #1a1a1a;
   line-height: 1.5;
 }
@@ -78,7 +80,7 @@ body {
 .swap-wrapper {
   display: flex;
   justify-content: center;
-  margin: -2px 0;
+  margin: 4px 0;
 }
 
 .swap-btn {
@@ -88,10 +90,13 @@ body {
   border: 1px solid #d1d1d1;
   background: #fff;
   font-size: 18px;
+  line-height: 0;
+  padding: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 2px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   transition: border-color 0.2s, color 0.2s;
   color: #666;
@@ -274,4 +279,83 @@ body {
   padding: 12px 16px;
   font-size: 14px;
   margin-top: 16px;
+}
+
+/* ---- Select Dropdowns ---- */
+.select-wrapper {
+  position: relative;
+}
+
+.currency-flag {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.currency-flag--fallback {
+  background: #e5e5e5;
+}
+
+.select-wrapper select {
+  width: 100%;
+  padding: 14px 16px 14px 40px;
+  font-size: 16px;
+  border: 1px solid #d1d1d1;
+  border-radius: 12px;
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  color: #111;
+}
+
+.select-wrapper select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  background: #fff;
+}
+
+.select-wrapper::after {
+  content: "▾";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ---- Chart ---- */
+.chart-container {
+  margin-top: 20px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid #e5e5e5;
+  min-height: 300px;
+}
+
+.chart-skeleton {
+  width: 100%;
+  height: 300px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

@@ -110,11 +110,20 @@ def api_history():
 
 CURRENCIES_API_URL = "https://api.currencyapi.com/v3/currencies"
 
+FLAG_OVERRIDES = {
+    "USD": "us", "EUR": "eu", "GBP": "gb", "JPY": "jp", "CHF": "ch",
+    "CAD": "ca", "AUD": "au", "NZD": "nz", "CNY": "cn", "INR": "in",
+    "KRW": "kr", "BRL": "br", "RUB": "ru", "MXN": "mx", "SEK": "se",
+    "NOK": "no", "DKK": "dk", "ZAR": "za", "TRY": "tr", "AED": "ae",
+    "SAR": "sa", "EGP": "eg", "NGN": "ng", "HKD": "hk", "SGD": "sg",
+    "MYR": "my", "THB": "th", "ILS": "il", "PLN": "pl", "ARS": "ar",
+}
+
 
 @app.route("/api/currencies", methods=["GET"])
 def api_currencies():
     client = get_redis_client()
-    cached = client.get("currencies")
+    cached = client.get("currencies:v2")
     if cached:
         return jsonify({"currencies": json.loads(cached.decode("utf-8"))})
 
@@ -128,12 +137,17 @@ def api_currencies():
     data = response.json()
 
     currencies = [
-        {"code": c["code"], "name": c["name"], "symbol": c.get("symbol", "")}
+        {
+            "code": c["code"],
+            "name": c["name"],
+            "symbol": c.get("symbol", ""),
+            "flag_country": FLAG_OVERRIDES.get(c["code"]) or (c.get("countries", [None])[0].lower() if c.get("countries") else None),
+        }
         for c in data.get("data", {}).values()
     ]
     currencies.sort(key=lambda x: x["code"])
 
-    client.setex("currencies", 86400, json.dumps(currencies))
+    client.setex("currencies:v2", 2592000, json.dumps(currencies))
 
     return jsonify({"currencies": currencies})
 
