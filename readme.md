@@ -1,87 +1,83 @@
 # Currency Exchange Dashboard
 
-A currency converter that gives you **both** official exchange rates and real Sudan parallel market rates (because the official SDG rate and what people actually pay on the street can be very different).
+A currency converter that shows both official exchange rates and the Sudan parallel market rate. The official SDG rate and what people actually pay on the street can be very different, so this gives you both.
 
-Built as a learning project — React frontend, Flask API, Redis caching, all wrapped in Docker and deployed on AWS.
-
----
+React frontend, Flask API, Redis caching, Docker on AWS.
 
 ## Live Demo
 
 https://currency-app.duckdns.org
 
----
-
 ## What It Does
 
 - Convert between any two currencies using official API rates
-- If SDG (Sudanese Pound) is involved, it also shows the **parallel market rate** scraped from Alsoug.com
+- If SDG is involved, also shows the parallel market rate scraped from Alsoug.com
 - Uses USD as a bridge for cross-currency conversions (e.g. EUR → SDG)
-- Caches results in Redis so it doesn't hit the API every single time
-- Shows you whether each rate is "Live" (freshly fetched) or "Cached" (from the last request)
-
----
+- Draws a chart comparing official vs market rates over time
+- Caches everything in Redis so it doesn't hit the API every time
+- Shows whether each rate is "Live" (freshly fetched) or "Cached" (from the last request)
 
 ## Tech Stack
 
-- **Frontend:** React (Vite)
-- **Backend:** Python (Flask + Gunicorn)
-- **Cache:** Redis
-- **Container:** Docker + docker-compose
-- **Deployment:** AWS EC2 (Ubuntu, free tier)
-
----
+- Frontend: React (Vite) + Recharts
+- Backend: Python (Flask + Gunicorn)
+- Cache: Redis
+- Container: Docker + docker-compose
+- Hosting: AWS EC2 free tier
 
 ## Project Structure
 
 ```
-curency convertor/
 ├── app.py                  # Flask app (JSON API)
 ├── config.py               # Environment variables
 ├── redis_client.py         # Redis caching functions
 ├── services/
+│   ├── history.py          # Rate snapshots in Redis sorted sets
 │   ├── official_rates.py   # Fetches from CurrencyAPI
 │   └── market_rates.py     # Scrapes Alsoug for SDG rate
-├── frontend/               # React source code
-│   └── src/
-│       ├── App.jsx
-│       ├── CurrencyForm.jsx
-│       ├── OfficialResult.jsx
-│       ├── MarketResult.jsx
-│       └── ErrorBanner.jsx
-├── static/react/           # Built React files (served by Flask)
+├── frontend/src/
+│   ├── App.jsx
+│   ├── CurrencyForm.jsx    # Dropdowns with flags
+│   ├── HistoryChart.jsx    # Recharts dual-line chart
+│   ├── OfficialResult.jsx
+│   ├── MarketResult.jsx
+│   └── ErrorBanner.jsx
+├── static/react/           # Built frontend (served by Flask)
 ├── Dockerfile
 ├── docker-compose.yml
-└── .env                    # Your API keys (not committed)
+└── .env                    # API keys (not committed)
 ```
 
----
+## API Endpoints
 
-## How It Works (Simple Version)
+| Route | What it does |
+|-------|-------------|
+| `POST /convert` | Convert currencies, returns official + market rates |
+| `GET /api/history?base=USD&target=SDG` | Rate snapshots for the last 30 days |
+| `GET /api/currencies` | List of all supported currencies (cached 30 days) |
+| `GET /health` | Redis status, uptime, last fetch times |
 
-1. You type in a currency pair (e.g. USD → SDG) and an amount
-2. Flask checks Redis: "do I already have this rate cached?"
-3. If yes → returns the cached rate (faster, no API call)
-4. If no → fetches from CurrencyAPI (or scrapes Alsoug for SDG), saves it in Redis, returns it
-5. Redis auto-deletes old entries after 24 hours (official) or 6 hours (market)
+## Run It
 
----
-
-## Run It Locally (Without Docker)
-
-### 1. Prerequisites
-- Python 3.12+
-- Redis running on your machine (or use Docker for Redis only)
-
-### 2. Clone and set up
+### With Docker
 
 ```bash
-git clone <repo-url>
-cd "curency convertor"
-pip install -r requirements.txt
+docker compose up --build
 ```
 
-### 3. Create a `.env` file
+Visit http://localhost:5000
+
+### Without Docker
+
+You need Python 3.12+, Redis, and Node.js.
+
+```bash
+pip install -r requirements.txt
+cd frontend && npm install && npm run build && cd ..
+python app.py
+```
+
+Create a `.env` file:
 
 ```
 SECRET_KEY=your_secret_key
@@ -90,47 +86,19 @@ ALSOUG_URL=https://www.alsoug.com
 REDIS_URL=redis://localhost:6379/0
 ```
 
-> You can get a free API key from https://currencyapi.com
+Get a free API key from https://currencyapi.com
 
-### 4. Build the React frontend
+## How the History Chart Works
 
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
-### 5. Run the app
-
-```bash
-python app.py
-```
-
-Visit **http://localhost:5000**
-
----
-
-## Run It With Docker (Easier)
-
-```bash
-docker compose up --build -d
-```
-
-This starts both the Flask app and Redis. Visit **http://localhost:5000**.
-
----
+Every time a live rate is fetched (not cached), it saves a snapshot to a Redis sorted set. The chart fetches the last 30 days of snapshots and draws two lines — green for official rates, orange for the market rate. Alsoug rate is collected every 6 hours via cron. Official rates are saved whenever someone visits the site (no cron, because CurrencyAPI is 300 requests/month).
 
 ## Notes
 
-- The parallel market rate comes from public listings on Alsoug — it's an estimate, not a guaranteed price
-- Official API rates might not reflect the real street value of SDG
-- Redis caches expire automatically (24h official, 6h market)
+- The parallel market rate comes from public listings on Alsoug — it's an estimate
+- Official API rates don't reflect the real street value of SDG
+- Redis caches expire: 24h for official rates, 6h for market rates
 
-## Things I Want to Add Later
+## Stuff I Might Add Later
 
-- Historical rate chart
 - Dark mode
 - A proper CI/CD pipeline
-
-
