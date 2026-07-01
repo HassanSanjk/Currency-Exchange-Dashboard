@@ -104,7 +104,7 @@ def api_history():
     base = request.args.get("base", "USD").upper().strip()
     target = request.args.get("target", "SDG").upper().strip()
     official = get_history(base, target, "official")
-    market = get_history(base, target, "market") if "SDG" in (base, target) else []
+    market = get_history("USD", "SDG", "market") if "SDG" in (base, target) else []
     return jsonify({"official": official, "market": market})
 
 
