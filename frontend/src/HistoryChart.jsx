@@ -27,7 +27,7 @@ function CustomTooltip({ active, payload, label }) {
       <div style={{ marginBottom: 4 }}>{formatTooltip(label)}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color }}>
-          {p.name}: {Number(p.value).toFixed(2)}
+          1 USD = {Number(p.value).toLocaleString('en-US', { maximumFractionDigits: 2 })} SDG
         </div>
       ))}
     </div>
@@ -43,17 +43,19 @@ function HistoryChart({ official = [], market = [] }) {
 
   if (!data.length) {
     return (
-      <div className="chart-container">
-        <div style={{ textAlign: 'center', color: '#666', padding: '130px 0', fontSize: 14 }}>
-          No history data yet
-        </div>
+    <div className="chart-container">
+      <div className="chart-title">USD → SDG Market Rate</div>
+      <div style={{ textAlign: 'center', color: '#666', padding: '110px 0', fontSize: 14 }}>
+        No history data yet
       </div>
+    </div>
     )
   }
 
   return (
     <div className="chart-container">
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="chart-title">USD → SDG Market Rate</div>
+      <ResponsiveContainer width="100%" height={280}>
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
           <XAxis
@@ -76,7 +78,7 @@ function HistoryChart({ official = [], market = [] }) {
             stroke="#f97316"
             strokeWidth={2}
             dot={false}
-            name="Market Rate"
+            name="1 USD to SDG"
             connectNulls={false}
           />
         </LineChart>

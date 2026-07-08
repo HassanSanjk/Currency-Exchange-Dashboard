@@ -355,6 +355,13 @@ body {
   min-height: 300px;
 }
 
+.chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+}
+
 .chart-skeleton {
   width: 100%;
   height: 300px;
