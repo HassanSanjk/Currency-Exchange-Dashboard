@@ -108,6 +108,21 @@ def api_history():
     return jsonify({"official": official, "market": market})
 
 
+@app.route("/cron/market-rate", methods=["GET"])
+def cron_market_rate():
+    from services.market_rates import scrape_alsoug_usd_sdg_rate
+    from services.history import save_snapshot
+    from redis_client import save_rate
+
+    try:
+        rate = scrape_alsoug_usd_sdg_rate()
+        save_rate("USD", "SDG", "market", rate, max_age_hours=6)
+        save_snapshot("USD", "SDG", "market", rate)
+        return jsonify({"ok": True, "rate": rate})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 CURRENCIES_API_URL = "https://api.currencyapi.com/v3/currencies"
 
 FLAG_OVERRIDES = {
